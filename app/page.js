@@ -1,5 +1,6 @@
 'use client'
 
+
 import {
     GoogleMap,
     MarkerF,
@@ -31,6 +32,10 @@ import { Input } from "@chakra-ui/react"
 import { Field } from "@/components/ui/field"
 import { Heading } from "@chakra-ui/react"
 import { Button } from "@/components/ui/button"
+import {
+    ProgressCircleRing,
+    ProgressCircleRoot,
+} from "@/components/ui/progress-circle"
 
 import subzone_random from '../data/subzone-random.json';
 import subzone_poisson from '../data/subzone-poisson.json';
@@ -65,8 +70,9 @@ export default function Home() {
     const [selectedMarker, setSelectedMarker] = useState(null)
     const [carparks, setCarkparks] = useState([])
     const [filter, setFilter] = useState('')
-    const [distance, setDistance] = useState(5)
+    const [distance, setDistance] = useState(1)
     const [isLoading, setLoading] = useState(true)
+    const [isGenerating, setIsGenerating] = useState(false)
     const { isLoaded } = useJsApiLoader({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP_API,
     });
@@ -137,6 +143,7 @@ export default function Home() {
     }
 
     const handleGenerateCarkparks = async (e) => {
+        setIsGenerating(true)
         // make api call
         const response = await fetch('/api', {
             method: 'POST',
@@ -149,6 +156,7 @@ export default function Home() {
         const data = await response.json();
         console.log(data.data);
         if (!data.data) {
+            setIsGenerating(false)
             return
         }
         const dataWithDistance = data.data.map((x) => {
@@ -157,6 +165,7 @@ export default function Home() {
         })
         console.log(dataWithDistance);
         setCarkparks(dataWithDistance)
+        setIsGenerating(false)
 
     }
 
@@ -235,8 +244,16 @@ export default function Home() {
 
 
                 <Field label="Distance (d) in km">
-                    <Input type="number" defaultValue={5} placeholder="5" onChange={(e) => handleDistance(e)} />
-                    <Button onClick={(e) => handleGenerateCarkparks()}>Generate Carkparks</Button>
+                    <Input type="number" defaultValue={distance} placeholder="5" onChange={(e) => handleDistance(e)} />
+                    <Button onClick={(e) => handleGenerateCarkparks()}>
+                        Generate Carkparks                     </Button>
+                    {
+                        isGenerating ?
+                            <ProgressCircleRoot value={null} size="sm">
+                                <ProgressCircleRing cap="round" />
+                            </ProgressCircleRoot> : <span></span>
+                    }
+
                 </Field>
 
                 <br />
