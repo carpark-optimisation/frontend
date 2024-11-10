@@ -1,14 +1,12 @@
 'use client'
+
 import {
     GoogleMap,
     MarkerF,
+    Circle,
     useJsApiLoader,
 } from "@react-google-maps/api";
 import { useEffect, useState, useRef } from "react";
-
-import subzone_random from '../data/subzone-random.json';
-import subzone_poisson from '../data/subzone-poisson.json';
-import subzone_centroids from '../data/subzone-centroids.json';
 
 import { HStack } from "@chakra-ui/react"
 import {
@@ -26,8 +24,14 @@ import {
     SelectTrigger,
     SelectValueText,
 } from "@/components/ui/select"
-
+import { Input } from "@chakra-ui/react"
+import { Field } from "@/components/ui/field"
 import { Heading } from "@chakra-ui/react"
+import { Button } from "@/components/ui/button"
+
+import subzone_random from '../data/subzone-random.json';
+import subzone_poisson from '../data/subzone-poisson.json';
+import subzone_centroids from '../data/subzone-centroids.json';
 
 export default function Home() {
 
@@ -54,7 +58,9 @@ export default function Home() {
     const planningAreasCollection = createListCollection({ items: planningAreas })
 
     const [markers, setMarkers] = useState([])
+    const [carparks, setCarkparks] = useState([])
     const [filter, setFilter] = useState('')
+    const [distance, setDistance] = useState(0)
     const [isLoading, setLoading] = useState(true)
     const { isLoaded } = useJsApiLoader({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP_API,
@@ -84,14 +90,6 @@ export default function Home() {
 
     useEffect(() => {
         setMarkers(subzone_centroids)
-        // // setData([])
-        // // setLoading(false)
-        // fetch('/api')
-        //     .then((res) => res.json())
-        //     .then((data) => {
-        //         setMarkers(data)
-        //         setLoading(false)
-        //     })
     }, [])
 
 
@@ -108,11 +106,26 @@ export default function Home() {
         }
     }
 
+    const handleDistance = (e) => {
+        setDistance(e.target.value)
+    }
+
+    const handleGenerateCarkparks = (e) => {
+        console.log(distance)
+        // make api call
+        setCarkparks([{ latitude: 1.3521, longitude: 103.8198, distance: distance }])
+    }
 
 
     if (isLoading && !isLoaded) return <p>Loading...</p>
     if (markers) {
         const filteredMarkers = markers.filter(v => {
+            if (filter == "") {
+                return true
+            }
+            return v.name.includes(filter)
+        })
+        const filteredCarparks = carparks.filter(v => {
             if (filter == "") {
                 return true
             }
@@ -174,6 +187,13 @@ export default function Home() {
                         ))}
                     </SelectContent>
                 </SelectRoot>
+                <br />
+
+
+                <Field label="Distance (d) in km">
+                    <Input type="number" placeholder="5" onChange={(e) => handleDistance(e)} />
+                    <Button onClick={(e) => handleGenerateCarkparks()}>Generate Carkparks</Button>
+                </Field>
 
                 <br />
                 <Heading as="h2">Generation Outcome:</Heading>
@@ -184,6 +204,14 @@ export default function Home() {
                     options={defaultMapOptions}
                     onLoad={onLoad}
                 >
+                    {
+                        filteredCarparks.length > 0 && filteredCarparks.map((x, i) => <Circle
+                            center={{ lat: x.latitude, lng: x.longitude }}
+                            radius={x.distance * 1000}
+                            key={i + "circle"}
+                        ></Circle>
+                        )
+                    }
                     {
                         filteredMarkers.length > 0 && filteredMarkers.map((x, i) =>
                             <MarkerF
