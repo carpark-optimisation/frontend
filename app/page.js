@@ -61,10 +61,11 @@ export default function Home() {
     const planningAreasCollection = createListCollection({ items: planningAreas })
 
     const [markers, setMarkers] = useState([])
+    const [markerType, setMarkerType] = useState(0)
     const [selectedMarker, setSelectedMarker] = useState(null)
     const [carparks, setCarkparks] = useState([])
     const [filter, setFilter] = useState('')
-    const [distance, setDistance] = useState(0)
+    const [distance, setDistance] = useState(5)
     const [isLoading, setLoading] = useState(true)
     const { isLoaded } = useJsApiLoader({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP_API,
@@ -76,7 +77,7 @@ export default function Home() {
         mapRef.current = map;
 
         // Load the GeoJSON data
-        const geoJsonUrl = "https://raw.githubusercontent.com/carpark-optimisation/optimisation-model/refs/heads/main/Master%20Plan%202019%20Subzone%20Boundary%20(No%20Sea)%20(GEOJSON).geojson"
+        const geoJsonUrl = "/planning_area.geojson"
         map.data.loadGeoJson(geoJsonUrl);
         map.data.setStyle({
             fillColor: "blue",
@@ -100,10 +101,27 @@ export default function Home() {
         setMarkers(subzone_centroids)
     }, [])
 
+    useEffect(() => {
+        switch (markerType) {
+            case 0:
+                setMarkers(subzone_centroids)
+                break;
+
+            case 1:
+                setMarkers(subzone_random)
+                break;
+
+            default:
+                setMarkers(subzone_poisson)
+                break;
+        }
+    }, [markerType])
+
 
     const handlePoints = (data) => {
-        setMarkers(data)
+        setMarkerType(data)
     }
+
 
 
     const handleFilter = (data) => {
@@ -118,13 +136,28 @@ export default function Home() {
         setDistance(e.target.value)
     }
 
-    const handleGenerateCarkparks = (e) => {
-        console.log(distance)
+    const handleGenerateCarkparks = async (e) => {
         // make api call
+        const response = await fetch('/api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ d_max: distance, marker_type: markerType }), // Replace with actual data
+        });
 
-        setCarkparks([
-            { latitude: 1.3521, longitude: 103.8198, distance: distance },
-        ])
+        const data = await response.json();
+        console.log(data.data);
+        if (!data.data) {
+            return
+        }
+        const dataWithDistance = data.data.map((x) => {
+            x.distance = distance
+            return x
+        })
+        console.log(dataWithDistance);
+        setCarkparks(dataWithDistance)
+
     }
 
 
@@ -140,7 +173,7 @@ export default function Home() {
             if (filter == "") {
                 return true
             }
-            return v.name.includes(filter)
+            return v.planning_area_name.includes(filter)
         })
         return (
             <div style={{ "padding": "10px", width: "90%", margin: "0 auto" }}>
@@ -157,21 +190,21 @@ export default function Home() {
                             description={"Fixed Single Point in the middle of the subzone"}
                             key={"subzoneCentroids"}
                             value={"subzoneCentroids"}
-                            onClick={() => handlePoints(subzone_centroids)}
+                            onClick={() => handlePoints(0)}
                         />
                         <RadioCardItem
                             label={"Random Points"}
                             description={"Random Points in the subzone"}
                             key={"subzoneRandom"}
                             value={"subzoneRandom"}
-                            onClick={() => handlePoints(subzone_random)}
+                            onClick={() => handlePoints(1)}
                         />
                         <RadioCardItem
                             label={"Poisson Points"}
                             description={"Poisson Points in the subzone"}
                             key={"subzonePoisson"}
                             value={"subzonePoisson"}
-                            onClick={() => handlePoints(subzone_poisson)}
+                            onClick={() => handlePoints(2)}
                         />
                     </HStack>
                 </RadioCardRoot>
@@ -202,7 +235,7 @@ export default function Home() {
 
 
                 <Field label="Distance (d) in km">
-                    <Input type="number" placeholder="5" onChange={(e) => handleDistance(e)} />
+                    <Input type="number" defaultValue={5} placeholder="5" onChange={(e) => handleDistance(e)} />
                     <Button onClick={(e) => handleGenerateCarkparks()}>Generate Carkparks</Button>
                 </Field>
 
