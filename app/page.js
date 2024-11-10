@@ -4,6 +4,7 @@ import {
     GoogleMap,
     MarkerF,
     Circle,
+    InfoWindow,
     useJsApiLoader,
 } from "@react-google-maps/api";
 import { useEffect, useState, useRef } from "react";
@@ -14,6 +15,8 @@ import {
     RadioCardRoot,
     RadioCardLabel
 } from "@/components/ui/radio-card"
+
+import { Card } from "@chakra-ui/react"
 
 import { createListCollection } from "@chakra-ui/react"
 import {
@@ -58,6 +61,7 @@ export default function Home() {
     const planningAreasCollection = createListCollection({ items: planningAreas })
 
     const [markers, setMarkers] = useState([])
+    const [selectedMarker, setSelectedMarker] = useState(null)
     const [carparks, setCarkparks] = useState([])
     const [filter, setFilter] = useState('')
     const [distance, setDistance] = useState(0)
@@ -85,6 +89,10 @@ export default function Home() {
             const feature = event.feature;
             console.log(feature)
         });
+        // map.data.addListener("mouseover", (event) => {
+        //     const feature = event.feature;
+        //     console.log(feature)
+        // });
     };
 
 
@@ -113,7 +121,10 @@ export default function Home() {
     const handleGenerateCarkparks = (e) => {
         console.log(distance)
         // make api call
-        setCarkparks([{ latitude: 1.3521, longitude: 103.8198, distance: distance }])
+
+        setCarkparks([
+            { latitude: 1.3521, longitude: 103.8198, distance: distance },
+        ])
     }
 
 
@@ -156,8 +167,8 @@ export default function Home() {
                             onClick={() => handlePoints(subzone_random)}
                         />
                         <RadioCardItem
-                            label={"Random with Min Distance constraint"}
-                            description={"Random Point with each point having distance constraint to another point within subzone"}
+                            label={"Poisson Points"}
+                            description={"Poisson Points in the subzone"}
                             key={"subzonePoisson"}
                             value={"subzonePoisson"}
                             onClick={() => handlePoints(subzone_poisson)}
@@ -217,8 +228,23 @@ export default function Home() {
                             <MarkerF
                                 position={{ lat: x.latitude, lng: x.longitude }}
                                 key={i}
+                                onClick={() => setSelectedMarker(x)}
                             />)
                     }
+                    {selectedMarker && (
+                        <InfoWindow
+                            position={{
+                                lat: selectedMarker.latitude,
+                                lng: selectedMarker.longitude,
+                            }}
+                            onCloseClick={() => setSelectedMarker(null)}
+                        >
+                            <div style={{ color: "black" }}>
+                                {selectedMarker.name}
+                            </div>
+
+                        </InfoWindow>
+                    )}
                 </GoogleMap>
                 <br />
             </div>
