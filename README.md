@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-### 3. Node.js Dependencies
+### 1. Node.js Dependencies
 To run this project, you will need the following dependencies on your system:
 - Node.js 
 - Node Package Manager
