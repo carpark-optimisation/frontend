@@ -1,22 +1,23 @@
 import { NextResponse } from 'next/server'
 import axios from 'axios'
 
-export async function GET(request) {
+// export async function GET(request) {
 
-    const res = await fetch(
-        'https://www.healthmap.org/getAlerts.php?category%5B%5D=1&category%5B%5D=2&category%5B%5D=29&diseases%5B%5D=82&time_interval=1+month&heatscore=1&partner=hm',
-        {
-            method: 'GET',
-        }
-    )
+//     const res = await fetch(
+//         'https://www.healthmap.org/getAlerts.php?category%5B%5D=1&category%5B%5D=2&category%5B%5D=29&diseases%5B%5D=82&time_interval=1+month&heatscore=1&partner=hm',
+//         {
+//             method: 'GET',
+//         }
+//     )
 
-    const data = await res.json()
+//     const data = await res.json()
 
-    return Response.json(data)
-}
+//     return Response.json(data)
+// }
 
 export async function POST(request) {
     try {
+        const backendUrl = process.env.BACKEND_URL ?? "http://127.0.0.1:5061"
         const body = await request.json()
         const markerTypeEnum = ['optimize-carparks-centroids', 'optimize-carparks-random', 'optimize-carparks-poisson']
         // Validate request body
@@ -30,7 +31,7 @@ export async function POST(request) {
         // Example: calling an external API (replace with your API endpoint)
         try {
             const apiResponse = await axios.post(
-                `http://127.0.0.1:5061/${markerTypeEnum[body.marker_type]}`,
+                `${backendUrl}/${markerTypeEnum[body.marker_type]}`,
                 body,
                 {
                     headers: {
